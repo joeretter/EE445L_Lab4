@@ -9,8 +9,8 @@
 
 //returns a pointer to the start of the temperature number in Recvbuff
 //format of temp in recvbuff is "temp":27.73,
-char* Get_Temperature_Pointer(void);
+char* Get_Temperature_Pointer(char *Recvbuff);
 
-char* Create_Fixed_Length_String(uint32_t string_length, char* start);
+void Create_Fixed_Length_String(char* start, char *string);
 
 void Delete_Fixed_Length_String(uint32_t string_length, char* start);

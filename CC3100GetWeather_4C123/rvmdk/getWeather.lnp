@@ -19,6 +19,7 @@
 ".\rvmdk\uartstdio.o"
 ".\rvmdk\ustdlib.o"
 ".\rvmdk\adcswtrigger.o"
+".\rvmdk\tempparser.o"
 "..\driverlib\rvmdk\driverlib.lib"
 --library_type=microlib --strict --scatter "cc31000_starter.sct"
 

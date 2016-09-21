@@ -95,27 +95,19 @@ Port A, SSI0 (PA2, PA3, PA5, PA6, PA7) sends data to Nokia5110 LCD
 #include "Nokia5110.h"
 #include "ADCSWTrigger.h"
 #include <string.h>
-#define SSID_NAME  "valvanoAP" /* Access point name to connect to */
+#include "TempParser.h"
+
+#define SSID_NAME  "SG5_Cyan" /* Access point name to connect to */
 #define SEC_TYPE   SL_SEC_TYPE_WPA
-#define PASSKEY    "12345678"  /* Password in case of secure AP */ 
+#define PASSKEY    "5204010127"  /* Password in case of secure AP */ 
 
 // 1) change Austin Texas to your city
 // 2) you can change metric to imperial if you want temperature in F
+// 3) go to http://openweathermap.org/appid#use 
+// 4) Register on the Sign up page
+// 5) get an API key (APPID) replace the 1234567890abcdef1234567890abcdef with your APPID
 #define REQUEST "GET /data/2.5/weather?q=Austin%20Texas&APPID=72bf6f4b6fe804deb3882d7bd027c4e4&units=imperial HTTP/1.1\r\nUser-Agent: Keil\r\nHost:api.openweathermap.org\r\nAccept: */*\r\n\r\n"
-// 1) go to http://openweathermap.org/appid#use 
-// 2) Register on the Sign up page
-// 3) get an API key (APPID) replace the 1234567890abcdef1234567890abcdef with your APPID
-
 #define BAUD_RATE   115200
-void UART_Init(void){
-  SysCtlPeripheralEnable(SYSCTL_PERIPH_UART0);
-  SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOA);
-  GPIOPinConfigure(GPIO_PA0_U0RX);
-  GPIOPinConfigure(GPIO_PA1_U0TX);
-  GPIOPinTypeUART(GPIO_PORTA_BASE, GPIO_PIN_0 | GPIO_PIN_1);
-  UARTStdioConfig(0,BAUD_RATE,50000000);
-}
-
 #define MAX_RECV_BUFF_SIZE  1024
 #define MAX_SEND_BUFF_SIZE  512
 #define MAX_HOSTNAME_SIZE   40
@@ -124,6 +116,45 @@ void UART_Init(void){
 #define SUCCESS             0
 #define CONNECTION_STATUS_BIT   0
 #define IP_AQUIRED_STATUS_BIT   1
+#define SET_STATUS_BIT(status_variable, bit)    status_variable |= (1<<(bit))
+#define CLR_STATUS_BIT(status_variable, bit)    status_variable &= ~(1<<(bit))
+#define GET_STATUS_BIT(status_variable, bit)    (0 != (status_variable & (1<<(bit))))
+#define IS_CONNECTED(status_variable)           GET_STATUS_BIT(status_variable, \
+                                                               STATUS_BIT_CONNECTION)
+#define IS_IP_AQUIRED(status_variable)          GET_STATUS_BIT(status_variable, \
+                                                               STATUS_BIT_IP_AQUIRED)
+																															 
+																															 /*
+ * GLOBAL VARIABLES -- Start
+ */
+
+char Recvbuff[MAX_RECV_BUFF_SIZE];
+char SendBuff[MAX_SEND_BUFF_SIZE];
+char HostName[MAX_HOSTNAME_SIZE];
+unsigned long DestinationIP;
+int SockID;
+
+
+typedef enum{
+    CONNECTED = 0x01,
+    IP_AQUIRED = 0x02,
+    IP_LEASED = 0x04,
+    PING_DONE = 0x08
+
+}e_Status;
+UINT32  g_Status = 0;
+/*
+ * GLOBAL VARIABLES -- End
+ */
+
+void UART_Init(void){
+  SysCtlPeripheralEnable(SYSCTL_PERIPH_UART0);
+  SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOA);
+  GPIOPinConfigure(GPIO_PA0_U0RX);
+  GPIOPinConfigure(GPIO_PA1_U0TX);
+  GPIOPinTypeUART(GPIO_PORTA_BASE, GPIO_PIN_0 | GPIO_PIN_1);
+  UARTStdioConfig(0,BAUD_RATE,50000000);
+}
 
 /* Application specific status/error codes */
 typedef enum{
@@ -147,42 +178,12 @@ typedef enum{
 
 }e_StatusBits;
 
-#define SET_STATUS_BIT(status_variable, bit)    status_variable |= (1<<(bit))
-#define CLR_STATUS_BIT(status_variable, bit)    status_variable &= ~(1<<(bit))
-#define GET_STATUS_BIT(status_variable, bit)    (0 != (status_variable & (1<<(bit))))
-#define IS_CONNECTED(status_variable)           GET_STATUS_BIT(status_variable, \
-                                                               STATUS_BIT_CONNECTION)
-#define IS_IP_AQUIRED(status_variable)          GET_STATUS_BIT(status_variable, \
-                                                               STATUS_BIT_IP_AQUIRED)
 
 typedef struct{
     UINT8 SSID[MAX_SSID_SIZE];
     INT32 encryption;
     UINT8 password[MAX_PASSKEY_SIZE];
 }UserInfo;
-
-/*
- * GLOBAL VARIABLES -- Start
- */
-
-char Recvbuff[MAX_RECV_BUFF_SIZE];
-char SendBuff[MAX_SEND_BUFF_SIZE];
-char HostName[MAX_HOSTNAME_SIZE];
-unsigned long DestinationIP;
-int SockID;
-
-
-typedef enum{
-    CONNECTED = 0x01,
-    IP_AQUIRED = 0x02,
-    IP_LEASED = 0x04,
-    PING_DONE = 0x08
-
-}e_Status;
-UINT32  g_Status = 0;
-/*
- * GLOBAL VARIABLES -- End
- */
 
 
  /*
@@ -195,7 +196,6 @@ static int32_t configureSimpleLinkToDefaultState(char *);
 /*
  * STATIC FUNCTION DEFINITIONS -- End
  */
-
 
 void Crash(uint32_t time){
   while(1){
@@ -257,8 +257,12 @@ int main(void){
 				UARTprintf("\r\n");
       }
     }
+		char *temp_start;
+		char temp_string[15];
 		//parse out the temp from recvbuffer, use TempParser.c
+		 temp_start = Get_Temperature_Pointer(Recvbuff);
 		//store the temp in a fixed length string
+		Create_Fixed_Length_String(temp_start, temp_string);
 		//print the temp to the LCD screen
 		uint32_t ADC_measurement = ADC0_InSeq3();  //sample the ADC
 		//create a string for the ADC measurement
