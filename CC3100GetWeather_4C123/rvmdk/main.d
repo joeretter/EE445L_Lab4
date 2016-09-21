@@ -39,3 +39,4 @@
 .\rvmdk\main.o: application_commands.h
 .\rvmdk\main.o: LED.h
 .\rvmdk\main.o: Nokia5110.h
+.\rvmdk\main.o: ADCSWTrigger.h

@@ -93,6 +93,7 @@ Port A, SSI0 (PA2, PA3, PA5, PA6, PA7) sends data to Nokia5110 LCD
 #include "application_commands.h"
 #include "LED.h"
 #include "Nokia5110.h"
+#include "ADCSWTrigger.h"
 #include <string.h>
 #define SSID_NAME  "valvanoAP" /* Access point name to connect to */
 #define SEC_TYPE   SL_SEC_TYPE_WPA
@@ -227,7 +228,7 @@ int main(void){int32_t retVal;  SlSecParams_t secParams;
   }
   UARTprintf("Connected\n");
   while(1){
-    strcpy(HostName,"openweathermap.org");
+    strcpy(HostName,"api.openweathermap.org");
     retVal = sl_NetAppDnsGetHostByName(HostName,
              strlen(HostName),&DestinationIP, SL_AF_INET);
     if(retVal == 0){
@@ -249,6 +250,12 @@ int main(void){int32_t retVal;  SlSecParams_t secParams;
         UARTprintf(Recvbuff);  UARTprintf("\r\n");
       }
     }
+		//parse out the temp from recvbuffer, use TempParser.c
+		//store the temp in a fixed length string
+		//print the temp to the LCD screen
+		uint32_t ADC_measurement = ADC0_InSeq3();  //sample the ADC
+		//create a string for the ADC measurement
+		//print the ADC measurement to the LCD
     while(Board_Input()==0){}; // wait for touch
     LED_GreenOff();
   }
@@ -542,5 +549,9 @@ void SimpleLinkSockEventHandler(SlSockEvent_t *pSock){
 /*
  * * ASYNCHRONOUS EVENT HANDLERS -- End
  */
+
+
+
+
 
 
