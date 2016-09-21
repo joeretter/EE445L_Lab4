@@ -99,6 +99,13 @@ Port A, SSI0 (PA2, PA3, PA5, PA6, PA7) sends data to Nokia5110 LCD
 #define SEC_TYPE   SL_SEC_TYPE_WPA
 #define PASSKEY    "12345678"  /* Password in case of secure AP */ 
 
+// 1) change Austin Texas to your city
+// 2) you can change metric to imperial if you want temperature in F
+#define REQUEST "GET /data/2.5/weather?q=Austin%20Texas&APPID=72bf6f4b6fe804deb3882d7bd027c4e4&units=imperial HTTP/1.1\r\nUser-Agent: Keil\r\nHost:api.openweathermap.org\r\nAccept: */*\r\n\r\n"
+// 1) go to http://openweathermap.org/appid#use 
+// 2) Register on the Sign up page
+// 3) get an API key (APPID) replace the 1234567890abcdef1234567890abcdef with your APPID
+
 #define BAUD_RATE   115200
 void UART_Init(void){
   SysCtlPeripheralEnable(SYSCTL_PERIPH_UART0);
@@ -114,10 +121,7 @@ void UART_Init(void){
 #define MAX_HOSTNAME_SIZE   40
 #define MAX_PASSKEY_SIZE    32
 #define MAX_SSID_SIZE       32
-
-
 #define SUCCESS             0
-
 #define CONNECTION_STATUS_BIT   0
 #define IP_AQUIRED_STATUS_BIT   1
 
@@ -142,7 +146,6 @@ typedef enum{
                                  */
 
 }e_StatusBits;
-
 
 #define SET_STATUS_BIT(status_variable, bit)    status_variable |= (1<<(bit))
 #define CLR_STATUS_BIT(status_variable, bit)    status_variable &= ~(1<<(bit))
@@ -203,51 +206,55 @@ void Crash(uint32_t time){
 /*
  * Application's entry point
  */
-// 1) change Austin Texas to your city
-// 2) you can change metric to imperial if you want temperature in F
-#define REQUEST "GET /data/2.5/weather?q=Austin%20Texas&APPID=72bf6f4b6fe804deb3882d7bd027c4e4&units=imperial HTTP/1.1\r\nUser-Agent: Keil\r\nHost:api.openweathermap.org\r\nAccept: */*\r\n\r\n"
-// 1) go to http://openweathermap.org/appid#use 
-// 2) Register on the Sign up page
-// 3) get an API key (APPID) replace the 1234567890abcdef1234567890abcdef with your APPID
-int main(void){int32_t retVal;  SlSecParams_t secParams;
-  char *pConfig = NULL; INT32 ASize = 0; SlSockAddrIn_t  Addr;
+
+int main(void){
+	int32_t retVal;  
+	SlSecParams_t secParams;
+  char *pConfig = NULL; 
+	INT32 ASize = 0; 
+	SlSockAddrIn_t  Addr;
   initClk();        // PLL 50 MHz
   UART_Init();      // Send data to PC, 115200 bps
   LED_Init();       // initialize LaunchPad I/O 
   UARTprintf("Weather App\n");
   retVal = configureSimpleLinkToDefaultState(pConfig); // set policies
-  if(retVal < 0)Crash(4000000);
+  if (retVal < 0) {
+		Crash(4000000);
+	}
   retVal = sl_Start(0, pConfig, 0);
-  if((retVal < 0) || (ROLE_STA != retVal) ) Crash(8000000);
+  if ((retVal < 0) || (ROLE_STA != retVal) ) {
+		Crash(8000000);
+	}
   secParams.Key = PASSKEY;
   secParams.KeyLen = strlen(PASSKEY);
   secParams.Type = SEC_TYPE; // OPEN, WPA, or WEP
   sl_WlanConnect(SSID_NAME, strlen(SSID_NAME), 0, &secParams, 0);
-  while((0 == (g_Status&CONNECTED)) || (0 == (g_Status&IP_AQUIRED))){
+  while ((0 == (g_Status&CONNECTED)) || (0 == (g_Status&IP_AQUIRED))) {
     _SlNonOsMainLoopTask();
   }
   UARTprintf("Connected\n");
-  while(1){
+  while(1) {
     strcpy(HostName,"api.openweathermap.org");
     retVal = sl_NetAppDnsGetHostByName(HostName,
-             strlen(HostName),&DestinationIP, SL_AF_INET);
-    if(retVal == 0){
+             strlen(HostName), &DestinationIP, SL_AF_INET);
+    if (retVal == 0) {
       Addr.sin_family = SL_AF_INET;
       Addr.sin_port = sl_Htons(80);
-      Addr.sin_addr.s_addr = sl_Htonl(DestinationIP);// IP to big endian 
+      Addr.sin_addr.s_addr = sl_Htonl(DestinationIP); // IP to big endian 
       ASize = sizeof(SlSockAddrIn_t);
       SockID = sl_Socket(SL_AF_INET,SL_SOCK_STREAM, 0);
-      if( SockID >= 0 ){
+      if ( SockID >= 0 ) {
         retVal = sl_Connect(SockID, ( SlSockAddr_t *)&Addr, ASize);
       }
-      if((SockID >= 0)&&(retVal >= 0)){
+      if ((SockID >= 0)&&(retVal >= 0)) {
         strcpy(SendBuff,REQUEST); 
         sl_Send(SockID, SendBuff, strlen(SendBuff), 0);// Send the HTTP GET 
         sl_Recv(SockID, Recvbuff, MAX_RECV_BUFF_SIZE, 0);// Receive response 
         sl_Close(SockID);
         LED_GreenOn();
         UARTprintf("\r\n\r\n");
-        UARTprintf(Recvbuff);  UARTprintf("\r\n");
+        UARTprintf(Recvbuff);  
+				UARTprintf("\r\n");
       }
     }
 		//parse out the temp from recvbuffer, use TempParser.c
@@ -326,7 +333,7 @@ static int32_t configureSimpleLinkToDefaultState(char *pConfig){
      * Wait for 'disconnection' event if 0 is returned, Ignore other return-codes
      */
   retVal = sl_WlanDisconnect();
-  if(0 == retVal){
+  if (0 == retVal) {
         /* Wait */
      while(IS_CONNECTED(g_Status));
   }
@@ -360,12 +367,8 @@ static int32_t configureSimpleLinkToDefaultState(char *pConfig){
   DestinationIP = 0;;
   SockID = 0;
 
-
   return retVal; /* Success */
 }
-
-
-
 
 /*
  * * ASYNCHRONOUS EVENT HANDLERS -- Start
@@ -373,17 +376,13 @@ static int32_t configureSimpleLinkToDefaultState(char *pConfig){
 
 /*!
     \brief This function handles WLAN events
-
     \param[in]      pWlanEvent is the event passed to the handler
-
     \return         None
-
     \note
-
     \warning
 */
-void SimpleLinkWlanEventHandler(SlWlanEvent_t *pWlanEvent){
-  switch(pWlanEvent->Event){
+void SimpleLinkWlanEventHandler(SlWlanEvent_t *pWlanEvent) {
+  switch(pWlanEvent->Event) {
     case SL_WLAN_CONNECT_EVENT:
     {
       SET_STATUS_BIT(g_Status, STATUS_BIT_CONNECTION);
@@ -430,13 +429,9 @@ void SimpleLinkWlanEventHandler(SlWlanEvent_t *pWlanEvent){
 /*!
     \brief This function handles events for IP address acquisition via DHCP
            indication
-
     \param[in]      pNetAppEvent is the event passed to the handler
-
     \return         None
-
     \note
-
     \warning
 */
 void SimpleLinkNetAppEventHandler(SlNetAppEvent_t *pNetAppEvent){
@@ -470,15 +465,11 @@ void SimpleLinkNetAppEventHandler(SlNetAppEvent_t *pNetAppEvent){
 
 /*!
     \brief This function handles callback for the HTTP server events
-
     \param[in]      pServerEvent - Contains the relevant event information
     \param[in]      pServerResponse - Should be filled by the user with the
                     relevant response information
-
     \return         None
-
     \note
-
     \warning
 */
 void SimpleLinkHttpServerCallback(SlHttpServerEvent_t *pHttpEvent,
@@ -492,9 +483,7 @@ void SimpleLinkHttpServerCallback(SlHttpServerEvent_t *pHttpEvent,
 
 /*!
     \brief This function handles general error events indication
-
     \param[in]      pDevEvent is the event passed to the handler
-
     \return         None
 */
 void SimpleLinkGeneralEventHandler(SlDeviceEvent_t *pDevEvent){
@@ -507,9 +496,7 @@ void SimpleLinkGeneralEventHandler(SlDeviceEvent_t *pDevEvent){
 
 /*!
     \brief This function handles socket events indication
-
     \param[in]      pSock is the event passed to the handler
-
     \return         None
 */
 void SimpleLinkSockEventHandler(SlSockEvent_t *pSock){
@@ -549,9 +536,3 @@ void SimpleLinkSockEventHandler(SlSockEvent_t *pSock){
 /*
  * * ASYNCHRONOUS EVENT HANDLERS -- End
  */
-
-
-
-
-
-
