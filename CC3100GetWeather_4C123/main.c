@@ -96,10 +96,14 @@ Port A, SSI0 (PA2, PA3, PA5, PA6, PA7) sends data to Nokia5110 LCD
 #include "ADCSWTrigger.h"
 #include <string.h>
 #include "TempParser.h"
+#include "ST7735.h"
+//#include "ST7735_Graphics.h"
 
 #define SSID_NAME  "SG5_Cyan" /* Access point name to connect to */
 #define SEC_TYPE   SL_SEC_TYPE_WPA
 #define PASSKEY    "5204010127"  /* Password in case of secure AP */ 
+#define PROMPT_X 7
+#define PROMPT_Y 15
 
 // 1) change Austin Texas to your city
 // 2) you can change metric to imperial if you want temperature in F
@@ -208,14 +212,20 @@ void Crash(uint32_t time){
  */
 
 int main(void){
+	char *temp_start; //used as pointer to beginning of temperature reading in buffer
+	char temp_string[15]; //fixed size string for display on LCD
 	int32_t retVal;  
 	SlSecParams_t secParams;
   char *pConfig = NULL; 
 	INT32 ASize = 0; 
 	SlSockAddrIn_t  Addr;
+	
   initClk();        // PLL 50 MHz
   UART_Init();      // Send data to PC, 115200 bps
   LED_Init();       // initialize LaunchPad I/O 
+	ST7735_InitR(INITR_REDTAB); //initialize LCD
+	ADC0_InitSWTriggerSeq3_Ch9(); //initialize ADC
+	
   UARTprintf("Weather App\n");
   retVal = configureSimpleLinkToDefaultState(pConfig); // set policies
   if (retVal < 0) {
@@ -257,17 +267,18 @@ int main(void){
 				UARTprintf("\r\n");
       }
     }
-		char *temp_start;
-		char temp_string[15];
-		//parse out the temp from recvbuffer, use TempParser.c
-		 temp_start = Get_Temperature_Pointer(Recvbuff);
-		//store the temp in a fixed length string
-		Create_Fixed_Length_String(temp_start, temp_string);
-		//print the temp to the LCD screen
+
+		
+		temp_start = Get_Temperature_Pointer(Recvbuff); //parse out the temp from recvbuffer, use TempParser.c
+		Create_Fixed_Length_String(temp_start, temp_string); //store the temp in a fixed length string
+		ST7735_DrawString(PROMPT_X, PROMPT_Y, temp_string, ST7735_WHITE); //print the temp to the LCD screen
+		
+
 		uint32_t ADC_measurement = ADC0_InSeq3();  //sample the ADC
 		//create a string for the ADC measurement
 		//print the ADC measurement to the LCD
-    while(Board_Input()==0){}; // wait for touch
+    
+		while(Board_Input()==0){}; // wait for touch
     LED_GreenOff();
   }
 }

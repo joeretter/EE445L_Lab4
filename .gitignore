@@ -1,4 +1,10 @@
 *.htm
 *.a10ga
 *.bak
-
+*.d
+*.o
+*.axf
+*.map
+*.lnp
+*.crf
+*.dep

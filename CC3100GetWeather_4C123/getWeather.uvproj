@@ -515,6 +515,26 @@
               <FileType>5</FileType>
               <FilePath>.\TempParser.h</FilePath>
             </File>
+            <File>
+              <FileName>ST7735.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\ST7735.c</FilePath>
+            </File>
+            <File>
+              <FileName>ST7735_Graphics.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\ST7735_Graphics.c</FilePath>
+            </File>
+            <File>
+              <FileName>ST7735.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\ST7735.h</FilePath>
+            </File>
+            <File>
+              <FileName>ST7735_Graphics.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\ST7735_Graphics.h</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

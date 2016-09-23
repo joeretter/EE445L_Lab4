@@ -21,7 +21,6 @@ char* Get_Temperature_Pointer(char *Recvbuff) {
 	char* temp_start = Recvbuff;
 	bool temp_found = FALSE;
 	int i = 0;
-	int index;
 	
 	while(temp_found == FALSE) {
 		if(Recvbuff[i] == 't' && Recvbuff[i+1] == 'e' && Recvbuff[i+2] == 'm' && Recvbuff[i+3] == 'p' && Recvbuff[i+4] == '"') {
@@ -30,7 +29,7 @@ char* Get_Temperature_Pointer(char *Recvbuff) {
 		}			
 		i++;
 	}
-	index = i;
+
 	return temp_start;
 }
 
