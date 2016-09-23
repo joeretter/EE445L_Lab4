@@ -102,8 +102,8 @@ Port A, SSI0 (PA2, PA3, PA5, PA6, PA7) sends data to Nokia5110 LCD
 #define SSID_NAME  "SG5_Cyan" /* Access point name to connect to */
 #define SEC_TYPE   SL_SEC_TYPE_WPA
 #define PASSKEY    "5204010127"  /* Password in case of secure AP */ 
-#define PROMPT_X 7
-#define PROMPT_Y 15
+#define PROMPT_X 3
+#define PROMPT_Y 7
 
 // 1) change Austin Texas to your city
 // 2) you can change metric to imperial if you want temperature in F
