@@ -97,6 +97,7 @@ Port A, SSI0 (PA2, PA3, PA5, PA6, PA7) sends data to Nokia5110 LCD
 #include <string.h>
 #include "TempParser.h"
 #include "ST7735.h"
+#include "temperature_sensor.h"
 //#include "ST7735_Graphics.h"
 
 #define SSID_NAME  "SG5_Cyan" /* Access point name to connect to */
@@ -104,6 +105,7 @@ Port A, SSI0 (PA2, PA3, PA5, PA6, PA7) sends data to Nokia5110 LCD
 #define PASSKEY    "5204010127"  /* Password in case of secure AP */ 
 #define PROMPT_X 3
 #define PROMPT_Y 7
+#define FAKEACD 516
 
 // 1) change Austin Texas to your city
 // 2) you can change metric to imperial if you want temperature in F
@@ -179,7 +181,6 @@ typedef enum{
                                  *      1 in 'g_Status', the device has acquired an IP
                                  *      0 in 'g_Status', the device has not acquired an IP
                                  */
-
 }e_StatusBits;
 
 
@@ -189,13 +190,10 @@ typedef struct{
     UINT8 password[MAX_PASSKEY_SIZE];
 }UserInfo;
 
-
  /*
  * STATIC FUNCTION DEFINITIONS  -- Start
  */
-
 static int32_t configureSimpleLinkToDefaultState(char *);
-
 
 /*
  * STATIC FUNCTION DEFINITIONS -- End
@@ -207,10 +205,10 @@ void Crash(uint32_t time){
     LED_RedToggle();
   }
 }
+
 /*
  * Application's entry point
  */
-
 int main(void){
 	char *temp_start; //used as pointer to beginning of temperature reading in buffer
 	char temp_string[15]; //fixed size string for display on LCD
@@ -219,6 +217,7 @@ int main(void){
   char *pConfig = NULL; 
 	INT32 ASize = 0; 
 	SlSockAddrIn_t  Addr;
+	uint32_t ADC_measurement = 0;
 	
   initClk();        // PLL 50 MHz
   UART_Init();      // Send data to PC, 115200 bps
@@ -267,14 +266,13 @@ int main(void){
 				UARTprintf("\r\n");
       }
     }
-
 		
 		temp_start = Get_Temperature_Pointer(Recvbuff); //parse out the temp from recvbuffer, use TempParser.c
 		Create_Fixed_Length_String(temp_start, temp_string); //store the temp in a fixed length string
 		ST7735_DrawString(PROMPT_X, PROMPT_Y, temp_string, ST7735_WHITE); //print the temp to the LCD screen
 		
-
-		uint32_t ADC_measurement = ADC0_InSeq3();  //sample the ADC
+		ADC_measurement = FAKEACD;
+		//uint32_t ADC_measurement = ADC0_InSeq3();  //sample the ADC
 		//create a string for the ADC measurement
 		//print the ADC measurement to the LCD
     

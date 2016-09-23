@@ -521,19 +521,19 @@
               <FilePath>.\ST7735.c</FilePath>
             </File>
             <File>
-              <FileName>ST7735_Graphics.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\ST7735_Graphics.c</FilePath>
-            </File>
-            <File>
               <FileName>ST7735.h</FileName>
               <FileType>5</FileType>
               <FilePath>.\ST7735.h</FilePath>
             </File>
             <File>
-              <FileName>ST7735_Graphics.h</FileName>
+              <FileName>temperature_sensor.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\temperature_sensor.c</FilePath>
+            </File>
+            <File>
+              <FileName>temperature_sensor.h</FileName>
               <FileType>5</FileType>
-              <FilePath>.\ST7735_Graphics.h</FilePath>
+              <FilePath>.\temperature_sensor.h</FilePath>
             </File>
           </Files>
         </Group>
