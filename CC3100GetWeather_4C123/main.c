@@ -272,14 +272,19 @@ int main(void){
 		ST7735_DrawString(PROMPT_X, PROMPT_Y, temp_string, ST7735_WHITE); //print the temp to the LCD screen
 		
 		ADC_measurement = FAKEACD;
-		char *fixed_string = "Internal Temp = 00.00 C";
+		char *template = "IntTemp = 00.00 C";
+		char fixed_string[19];
+		uint8_t k = 0;
+		for (k = 0; k < 19; k++){
+			fixed_string[k] = template[k];
+		}
 		
-		fixed_string[16] = '1';
-		fixed_string[17] = '2';
-		fixed_string[19] = '3';
-		fixed_string[20] = '4';
+		fixed_string[10] = '1';
+		fixed_string[11] = '2';
+		fixed_string[13] = '3';
+		fixed_string[14] = '4';
 		
-		ST7735_DrawString(PROMPT_X, PROMPT_Y + 2, fixed_string, ST7735_WHITE); //print the temp to the LCD screen
+		ST7735_DrawString(PROMPT_X-1, PROMPT_Y + 2, fixed_string, ST7735_WHITE); //print the temp to the LCD screen
 	
 		//uint32_t ADC_measurement = ADC0_InSeq3();  //sample the ADC
 		//create a string for the ADC measurement
