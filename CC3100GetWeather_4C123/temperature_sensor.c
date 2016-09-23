@@ -72,9 +72,8 @@
 #include "driverlib/ssi.h"
 #include "driverlib/systick.h"
 #include "driverlib/adc.h"
-#include "utils/uartstdio.h"
-#include "utils/uartstdio.c"
 #include <string.h>
+#include "utils/uartstdio.h"
 
 volatile uint32_t millis=0;
 
@@ -139,7 +138,7 @@ InitConsole(void)
     UARTStdioConfig(0, 115200, 16000000);
 }
 
-int main(){
+int temp_main(){
 	  SysCtlClockSet(SYSCTL_SYSDIV_2_5|SYSCTL_USE_PLL|SYSCTL_OSC_MAIN|SYSCTL_XTAL_16MHZ);
 	  SysTickbegin();
 	  InitConsole();

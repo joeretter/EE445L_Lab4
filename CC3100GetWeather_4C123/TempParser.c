@@ -34,7 +34,7 @@ char* Get_Temperature_Pointer(char *Recvbuff) {
 }
 
 void Create_Fixed_Length_String(char* start, char *string) {
-	char * copy = "Temp = 00.00 F";
+	char *copy = "Temp = 00.00 F";
 	uint8_t k = 0;
 	for (k = 0; k < 15; k++){
 		string[k] = copy[k];
