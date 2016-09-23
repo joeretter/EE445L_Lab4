@@ -138,7 +138,9 @@ InitConsole(void)
     UARTStdioConfig(0, 115200, 16000000);
 }
 
-int temp_main(){
+//populates the internal_temp_string with the internal temp of the tm4c
+// internal_temp_string should be 20 chars long
+void Get_Internal_Temperature(char *internal_temp_string){
 	  SysCtlClockSet(SYSCTL_SYSDIV_2_5|SYSCTL_USE_PLL|SYSCTL_OSC_MAIN|SYSCTL_XTAL_16MHZ);
 	  SysTickbegin();
 	  InitConsole();
@@ -195,7 +197,7 @@ int temp_main(){
 	                             ADC_CTL_END);
 
 
-	    //ADCHardwareOversampleConfigure(ADC0_BASE,64);
+	    ADCHardwareOversampleConfigure(ADC0_BASE,64);
 
 	    //
 	    // Since sample sequence 3 is now configured, it must be enabled.
@@ -209,59 +211,73 @@ int temp_main(){
 	    ADCIntClear(ADC0_BASE, 3);
 
 	    //
-	    // Sample the temperature sensor forever.  Display the value on the
+	    // Sample the temperature sensor once.  Display the value on the
 	    // console.
 	    //
-	    while(1)
-	    {
-	        //
-	        // Trigger the ADC conversion.
-	        //
-	        ADCProcessorTrigger(ADC0_BASE, 3);
 
-	        //
-	        // Wait for conversion to be completed.
-	        //
-	        while(!ADCIntStatus(ADC0_BASE, 3, false))
-	        {
-	        }
+			//
+			// Trigger the ADC conversion.
+			//
+			ADCProcessorTrigger(ADC0_BASE, 3);
 
-	        //
-	        // Clear the ADC interrupt flag.
-	        //
-	        ADCIntClear(ADC0_BASE, 3);
+			//
+			// Wait for conversion to be completed.
+			//
+			while(!ADCIntStatus(ADC0_BASE, 3, false))
+			{
+			}
 
-	        //
-	        // Read ADC Value.
-	        //
-	        ADCSequenceDataGet(ADC0_BASE, 3, ADCValues);
+			//
+			// Clear the ADC interrupt flag.
+			//
+			ADCIntClear(ADC0_BASE, 3);
 
-	        //
-	        // Use non-calibrated conversion provided in the data sheet. I use floats in intermediate
-	        // math but you could use intergers with multiplied by powers of 10 and divide on the end
-	        // Make sure you divide last to avoid dropout.
-	        //
-	        TempValueC = (uint32_t)(147.5 - ((75.0*3.3 *(float)ADCValues[0])) / 4096.0);
+			//
+			// Read ADC Value.
+			//
+			ADCSequenceDataGet(ADC0_BASE, 3, ADCValues);
 
-	        //
-	        // Get Fahrenheit value.  Make sure you divide last to avoid dropout.
-	        //
-	        TempValueF = ((TempValueC * 9) + 160) / 5;
+			//
+			// Use non-calibrated conversion provided in the data sheet. I use floats in intermediate
+			// math but you could use intergers with multiplied by powers of 10 and divide on the end
+			// Make sure you divide last to avoid dropout.
+			//
+			TempValueC = (uint32_t)(147.5 - ((75.0*3.3 *(float)ADCValues[0])) / 4096.0);
 
-	        //
-	        // Display the temperature value on the console.
-	        //
-	        UARTprintf("Temperature = %3d*C or %3d*F\r", TempValueC,
-	        		TempValueF);
+			//
+			// Get Fahrenheit value.  Make sure you divide last to avoid dropout.
+			//
+			TempValueF = ((TempValueC * 9) + 160) / 5;
 
-	        //
-	        // This function provides a means of generating a constant length
-	        // delay.  The function delay (in cycles) = 3 * parameter.  Delay
-	        // 250ms arbitrarily.
-	        //
-	        SysCtlDelay(80000000 / 12);
-	    }
+			//
+			// Display the temperature value on the console.
+			//
+			UARTprintf("Temperature = %3d*C or %3d*F\r", TempValueC,
+					TempValueF);
 
-
+			//
+			// This function provides a means of generating a constant length
+			// delay.  The function delay (in cycles) = 3 * parameter.  Delay
+			// 250ms arbitrarily.
+			//
+			SysCtlDelay(80000000 / 12);
+			
+			
+			//write the temperature into the string
+			
+			int32_t tens_place;
+			int32_t ones_place;
+			
+			tens_place = TempValueC/10;
+			ones_place = TempValueC%10;
+			
+			char *copy = "Internal Temp = 00 C";
+			uint8_t k = 0;
+			for (k = 0; k < 21; k++){
+				internal_temp_string[k] = copy[k];
+			}
+			
+			internal_temp_string[16] = tens_place + '0';
+			internal_temp_string[17] = ones_place + '0';
 
 }
