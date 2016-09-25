@@ -105,7 +105,6 @@ Port A, SSI0 (PA2, PA3, PA5, PA6, PA7) sends data to Nokia5110 LCD
 #define PASSKEY    "5204010127"  /* Password in case of secure AP */ 
 #define PROMPT_X 3
 #define PROMPT_Y 7
-#define FAKEACD 516
 
 // 1) change Austin Texas to your city
 // 2) you can change metric to imperial if you want temperature in F
@@ -217,7 +216,6 @@ int main(void){
   char *pConfig = NULL; 
 	INT32 ASize = 0; 
 	SlSockAddrIn_t  Addr;
-	uint32_t ADC_measurement = 0;
 	
   initClk();        // PLL 50 MHz
   UART_Init();      // Send data to PC, 115200 bps
@@ -271,20 +269,14 @@ int main(void){
 		Create_Fixed_Length_String(temp_start, temp_string); //store the temp in a fixed length string
 		ST7735_DrawString(PROMPT_X, PROMPT_Y, temp_string, ST7735_WHITE); //print the temp to the LCD screen
 		
-		ADC_measurement = FAKEACD;
-		char *template = "IntTemp = 00.00 C";
-		char fixed_string[19];
-		uint8_t k = 0;
-		for (k = 0; k < 19; k++){
-			fixed_string[k] = template[k];
-		}
+		char fixed_string[21];
+		Get_Internal_Temperature(fixed_string);		
+		ST7735_DrawString(PROMPT_X-2, PROMPT_Y + 2, fixed_string, ST7735_WHITE); //print the temp to the LCD screen
 		
-		fixed_string[10] = '1';
-		fixed_string[11] = '2';
-		fixed_string[13] = '3';
-		fixed_string[14] = '4';
-		
-		ST7735_DrawString(PROMPT_X-1, PROMPT_Y + 2, fixed_string, ST7735_WHITE); //print the temp to the LCD screen
+		unsigned long ip_address;
+		retVal = sl_NetAppDnsGetHostByName("embedded-systems-server.appspot.com", 35, &ip_address, SL_AF_INET);
+		SockID = sl_Socket(SL_AF_INET,SL_SOCK_STREAM, 0);
+		retVal = sl_Connect(SockID, ( SlSockAddr_t *)&Addr, ASize);
 	
 		//uint32_t ADC_measurement = ADC0_InSeq3();  //sample the ADC
 		//create a string for the ADC measurement

@@ -25,4 +25,8 @@
 #ifndef __TEMPSENSOR_H__
 #define __TEMPSENSOR_H__
 
+//Expects 20 character string (char[20] with null termination at index 20)
+//populates 
+void Get_Internal_Temperature(char *internal_temp_string);
+
 #endif // __TEMPSENSOR_H__
