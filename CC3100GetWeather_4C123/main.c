@@ -112,6 +112,8 @@ Port A, SSI0 (PA2, PA3, PA5, PA6, PA7) sends data to Nokia5110 LCD
 // 4) Register on the Sign up page
 // 5) get an API key (APPID) replace the 1234567890abcdef1234567890abcdef with your APPID
 #define REQUEST "GET /data/2.5/weather?q=Austin%20Texas&APPID=72bf6f4b6fe804deb3882d7bd027c4e4&units=imperial HTTP/1.1\r\nUser-Agent: Keil\r\nHost:api.openweathermap.org\r\nAccept: */*\r\n\r\n"
+#define REQUEST_PE1 "GET /query?city=Austin&id=Joe%20Retter,%20Brad%20Gray&greet=Int%20Temp%3D"
+#define REQUEST_PE2 "C&edxcode=8086 HTTP/1.1\r\nUser-Agent: Keil\r\nHost: embedded-systems-server.appspot.com\r\n\r\n"
 #define BAUD_RATE   115200
 #define MAX_RECV_BUFF_SIZE  1024
 #define MAX_SEND_BUFF_SIZE  512
@@ -211,6 +213,7 @@ void Crash(uint32_t time){
 int main(void){
 	char *temp_start; //used as pointer to beginning of temperature reading in buffer
 	char temp_string[15]; //fixed size string for display on LCD
+	char fixed_string[21];
 	int32_t retVal;  
 	SlSecParams_t secParams;
   char *pConfig = NULL; 
@@ -268,13 +271,42 @@ int main(void){
 		temp_start = Get_Temperature_Pointer(Recvbuff); //parse out the temp from recvbuffer, use TempParser.c
 		Create_Fixed_Length_String(temp_start, temp_string); //store the temp in a fixed length string
 		ST7735_DrawString(PROMPT_X, PROMPT_Y, temp_string, ST7735_WHITE); //print the temp to the LCD screen
-		
-		char fixed_string[21];
+			
 		Get_Internal_Temperature(fixed_string);		
 		ST7735_DrawString(PROMPT_X-2, PROMPT_Y + 2, fixed_string, ST7735_WHITE); //print the temp to the LCD screen
 		
-		unsigned long ip_address;
-		retVal = sl_NetAppDnsGetHostByName("embedded-systems-server.appspot.com", 35, &ip_address, SL_AF_INET);
+		char *temp = "00";
+		char int_temp_string[3];
+		strcpy(int_temp_string, temp);
+		int_temp_string[0] = fixed_string[16];
+		int_temp_string[1] = fixed_string[17];
+		
+		//values for variables are written before each call, so we can use the same variables here
+		//HostName size MAX_HOSTNAME_SIZE
+		strcpy(HostName, "embedded-systems-server.appspot.com");
+		retVal = sl_NetAppDnsGetHostByName(HostName, strlen(HostName), &DestinationIP, SL_AF_INET);
+		if (retVal == 0) {
+			 Addr.sin_family = SL_AF_INET;
+      Addr.sin_port = sl_Htons(80);
+      Addr.sin_addr.s_addr = sl_Htonl(DestinationIP); // IP to big endian 
+      ASize = sizeof(SlSockAddrIn_t);
+      SockID = sl_Socket(SL_AF_INET,SL_SOCK_STREAM, 0);
+      if ( SockID >= 0 ) {
+        retVal = sl_Connect(SockID, ( SlSockAddr_t *)&Addr, ASize);
+      }
+      if ((SockID >= 0)&&(retVal >= 0)) {
+        strcpy(SendBuff,REQUEST_PE1);
+				strcat(SendBuff, int_temp_string);
+				strcat(SendBuff, REQUEST_PE2);
+        sl_Send(SockID, SendBuff, strlen(SendBuff), 0);// Send the HTTP GET 
+        sl_Recv(SockID, Recvbuff, MAX_RECV_BUFF_SIZE, 0);// Receive response 
+        sl_Close(SockID);
+        LED_GreenOn();
+        UARTprintf("\r\n\r\n");
+        UARTprintf(Recvbuff);  
+				UARTprintf("\r\n");
+      }
+		}
 		SockID = sl_Socket(SL_AF_INET,SL_SOCK_STREAM, 0);
 		retVal = sl_Connect(SockID, ( SlSockAddr_t *)&Addr, ASize);
 	
