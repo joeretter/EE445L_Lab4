@@ -1,3 +1,12 @@
+//main.c
+//Joe Retter, jmr5823
+//Brad Gray, bg22946
+//Initial Creation Date: 21 Sep 2016
+//Descritpion: Test file for Lab2
+//Lab 2
+//TA: Mahesh
+//Date of Last Revision: 26 Sep 2016
+
 /*
  * main.c - Example project for UT.6.02x Embedded Systems - Shape the World
  * Jonathan Valvano and Ramesh Yerraballi
@@ -78,6 +87,8 @@ UART0 (PA1, PA0) sends data to the PC via the USB debug cable, 115200 baud rate
 Port A, SSI0 (PA2, PA3, PA5, PA6, PA7) sends data to Nokia5110 LCD
 
 */
+
+
 #include "..\cc3100\simplelink\include\simplelink.h"
 #include "inc/hw_memmap.h"
 #include "inc/hw_types.h"
@@ -95,16 +106,18 @@ Port A, SSI0 (PA2, PA3, PA5, PA6, PA7) sends data to Nokia5110 LCD
 #include "Nokia5110.h"
 #include "ADCSWTrigger.h"
 #include <string.h>
+#include "../inc/tm4c123gh6pm.h"
 #include "TempParser.h"
 #include "ST7735.h"
 #include "temperature_sensor.h"
-//#include "ST7735_Graphics.h"
 
 #define SSID_NAME  "SG5_Cyan" /* Access point name to connect to */
 #define SEC_TYPE   SL_SEC_TYPE_WPA
 #define PASSKEY    "5204010127"  /* Password in case of secure AP */ 
 #define PROMPT_X 3
 #define PROMPT_Y 7
+#define PF2             (*((volatile uint32_t *)0x40025010))
+#define PF1             (*((volatile uint32_t *)0x40025008))
 
 // 1) change Austin Texas to your city
 // 2) you can change metric to imperial if you want temperature in F
@@ -112,7 +125,7 @@ Port A, SSI0 (PA2, PA3, PA5, PA6, PA7) sends data to Nokia5110 LCD
 // 4) Register on the Sign up page
 // 5) get an API key (APPID) replace the 1234567890abcdef1234567890abcdef with your APPID
 #define REQUEST "GET /data/2.5/weather?q=Austin%20Texas&APPID=72bf6f4b6fe804deb3882d7bd027c4e4&units=imperial HTTP/1.1\r\nUser-Agent: Keil\r\nHost:api.openweathermap.org\r\nAccept: */*\r\n\r\n"
-#define REQUEST_PE1 "GET /query?city=Austin&id=Joe%20Retter,%20Brad%20Gray&greet=Int%20Temp%3D"
+#define REQUEST_PE1 "GET /query?city=Austin&id=Joe%20R,%20Brad%20G&greet=Int%20Temp%3D"
 #define REQUEST_PE2 "C&edxcode=8086 HTTP/1.1\r\nUser-Agent: Keil\r\nHost: embedded-systems-server.appspot.com\r\n\r\n"
 #define BAUD_RATE   115200
 #define MAX_RECV_BUFF_SIZE  1024
@@ -225,6 +238,18 @@ int main(void){
   LED_Init();       // initialize LaunchPad I/O 
 	ST7735_InitR(INITR_REDTAB); //initialize LCD
 	ADC0_InitSWTriggerSeq3_Ch9(); //initialize ADC
+	SYSCTL_RCGCGPIO_R |= 0x20;            // activate port F
+  GPIO_PORTF_DIR_R |= 0x06;             // make PF2, PF1 out (built-in LED)
+  GPIO_PORTF_AFSEL_R &= ~0x06;          // disable alt funct on PF2, PF1
+  GPIO_PORTF_DEN_R |= 0x06;             // enable digital I/O on PF2, PF1
+                                        // configure PF2 as GPIO
+  GPIO_PORTF_PCTL_R = (GPIO_PORTF_PCTL_R&0xFFFFF00F)+0x00000000;
+  GPIO_PORTF_AMSEL_R = 0;               // disable analog functionality on PF
+  PF2 = 0;  
+	PF1 = 0;
+	
+
+	
 	
   UARTprintf("Weather App\n");
   retVal = configureSimpleLinkToDefaultState(pConfig); // set policies
@@ -258,8 +283,10 @@ int main(void){
       }
       if ((SockID >= 0)&&(retVal >= 0)) {
         strcpy(SendBuff,REQUEST); 
+				//PF1 ^= 0x02;
         sl_Send(SockID, SendBuff, strlen(SendBuff), 0);// Send the HTTP GET 
         sl_Recv(SockID, Recvbuff, MAX_RECV_BUFF_SIZE, 0);// Receive response 
+				//PF1 ^= 0x02;
         sl_Close(SockID);
         LED_GreenOn();
         UARTprintf("\r\n\r\n");
@@ -298,8 +325,10 @@ int main(void){
         strcpy(SendBuff,REQUEST_PE1);
 				strcat(SendBuff, int_temp_string);
 				strcat(SendBuff, REQUEST_PE2);
+				//PF1 ^= 0x02;
         sl_Send(SockID, SendBuff, strlen(SendBuff), 0);// Send the HTTP GET 
         sl_Recv(SockID, Recvbuff, MAX_RECV_BUFF_SIZE, 0);// Receive response 
+				//PF1 ^= 0x02;
         sl_Close(SockID);
         LED_GreenOn();
         UARTprintf("\r\n\r\n");
